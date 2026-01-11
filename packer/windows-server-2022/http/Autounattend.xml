@@ -16,60 +16,69 @@
 
         <component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <DriverPaths>
-                <!-- Drivers VirtIO pour Proxmox -->
+                <!-- Drivers VirtIO pour Proxmox - Scanner plusieurs lecteurs -->
+                <!-- Lecteur D: -->
                 <PathAndCredentials wcm:action="add" wcm:keyValue="1">
-                    <Path>E:\vioscsi\2k22\amd64</Path>
+                    <Path>D:\vioscsi\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="2">
-                    <Path>E:\NetKVM\2k22\amd64</Path>
+                    <Path>D:\viostor\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="3">
-                    <Path>E:\Balloon\2k22\amd64</Path>
+                    <Path>D:\NetKVM\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="4">
-                    <Path>E:\pvpanic\2k22\amd64</Path>
+                    <Path>D:\Balloon\2k22\amd64</Path>
                 </PathAndCredentials>
+                <!-- Lecteur E: -->
                 <PathAndCredentials wcm:action="add" wcm:keyValue="5">
-                    <Path>E:\qemupciserial\2k22\amd64</Path>
+                    <Path>E:\vioscsi\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="6">
-                    <Path>E:\qxldod\2k22\amd64</Path>
+                    <Path>E:\viostor\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="7">
-                    <Path>E:\vioinput\2k22\amd64</Path>
+                    <Path>E:\NetKVM\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="8">
-                    <Path>E:\viorng\2k22\amd64</Path>
+                    <Path>E:\Balloon\2k22\amd64</Path>
                 </PathAndCredentials>
+                <!-- Lecteur F: -->
                 <PathAndCredentials wcm:action="add" wcm:keyValue="9">
-                    <Path>E:\vioserial\2k22\amd64</Path>
+                    <Path>F:\vioscsi\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="10">
-                    <Path>E:\viostor\2k22\amd64</Path>
+                    <Path>F:\viostor\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="11">
+                    <Path>F:\NetKVM\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="12">
+                    <Path>F:\Balloon\2k22\amd64</Path>
                 </PathAndCredentials>
             </DriverPaths>
         </component>
 
         <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <!-- Configuration du disque -->
+            <!-- Configuration du disque GPT pour UEFI -->
             <DiskConfiguration>
                 <Disk wcm:action="add">
                     <DiskID>0</DiskID>
                     <WillWipeDisk>true</WillWipeDisk>
                     <CreatePartitions>
-                        <!-- Partition EFI -->
+                        <!-- Partition EFI System -->
                         <CreatePartition wcm:action="add">
                             <Order>1</Order>
-                            <Size>100</Size>
+                            <Size>300</Size>
                             <Type>EFI</Type>
                         </CreatePartition>
-                        <!-- Partition MSR -->
+                        <!-- Partition MSR (Microsoft Reserved) -->
                         <CreatePartition wcm:action="add">
                             <Order>2</Order>
                             <Size>128</Size>
                             <Type>MSR</Type>
                         </CreatePartition>
-                        <!-- Partition Windows -->
+                        <!-- Partition Windows principale -->
                         <CreatePartition wcm:action="add">
                             <Order>3</Order>
                             <Extend>true</Extend>
@@ -82,7 +91,7 @@
                             <Order>1</Order>
                             <PartitionID>1</PartitionID>
                             <Format>FAT32</Format>
-                            <Label>System</Label>
+                            <Label>EFI</Label>
                         </ModifyPartition>
                         <!-- Format partition Windows -->
                         <ModifyPartition wcm:action="add">
@@ -190,9 +199,21 @@
             <!-- Exécution du script WinRM au premier démarrage -->
             <FirstLogonCommands>
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File F:\winrm-setup.ps1</CommandLine>
-                    <Description>Configuration de WinRM pour Packer</Description>
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File E:\winrm-setup.ps1</CommandLine>
+                    <Description>Configuration de WinRM pour Packer (E:)</Description>
                     <Order>1</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File F:\winrm-setup.ps1</CommandLine>
+                    <Description>Configuration de WinRM pour Packer (F:)</Description>
+                    <Order>2</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File G:\winrm-setup.ps1</CommandLine>
+                    <Description>Configuration de WinRM pour Packer (G:)</Description>
+                    <Order>3</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
             </FirstLogonCommands>
