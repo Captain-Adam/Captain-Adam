@@ -105,9 +105,20 @@ source "proxmox-iso" "windows-server-2022" {
   winrm_timeout  = "2h"
   winrm_insecure = true
 
-  # Boot
-  boot_wait    = "3s"
-  boot_command = ["<spacebar>"]
+  # Boot - Envoyer plusieurs touches pour capturer "Press any key to boot from CD/DVD"
+  boot_wait = "1s"
+  boot_command = [
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>",
+    "<spacebar><wait>"
+  ]
 
   # Agent QEMU
   qemu_agent = true
