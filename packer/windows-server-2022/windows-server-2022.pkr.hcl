@@ -17,9 +17,8 @@ packer {
 source "proxmox-iso" "windows-server-2022" {
   # Connexion Proxmox
   proxmox_url              = "https://${var.proxmox_host}:8006/api2/json"
-  username                 = var.proxmox_username
+  username                 = var.proxmox_token != "" ? var.proxmox_token : var.proxmox_username
   password                 = var.proxmox_password
-  token                    = var.proxmox_token
   insecure_skip_tls_verify = var.proxmox_skip_tls_verify
   node                     = var.proxmox_node
 
