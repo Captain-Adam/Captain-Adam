@@ -52,6 +52,7 @@ source "proxmox-iso" "windows-server-2022" {
     bridge   = var.proxmox_network_bridge
     model    = "virtio"
     firewall = false
+    vlan_tag = var.proxmox_network_vlan > 0 ? var.proxmox_network_vlan : null
   }
 
   # Disque principal

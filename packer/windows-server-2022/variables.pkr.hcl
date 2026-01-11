@@ -59,6 +59,12 @@ variable "proxmox_network_bridge" {
   default     = "vmbr0"
 }
 
+variable "proxmox_network_vlan" {
+  type        = number
+  description = "VLAN tag pour l'interface réseau (0 = pas de VLAN)"
+  default     = 0
+}
+
 # ============================================================================
 # Variables ISO
 # ============================================================================
