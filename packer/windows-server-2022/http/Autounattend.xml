@@ -196,7 +196,7 @@
                 <Username>Administrator</Username>
             </AutoLogon>
 
-            <!-- Exécution du script WinRM au premier démarrage -->
+            <!-- Exécution des commandes au premier démarrage -->
             <FirstLogonCommands>
                 <!-- Installation du QEMU Guest Agent (nécessaire pour Packer) -->
                 <SynchronousCommand wcm:action="add">
@@ -224,30 +224,71 @@
                     <Order>4</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
-                <!-- Pause pour laisser le temps à l'agent de démarrer -->
+                <!-- Attente réseau -->
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>cmd /c ping -n 10 127.0.0.1 > nul</CommandLine>
-                    <Description>Attente du démarrage de l'agent</Description>
+                    <CommandLine>cmd /c ping -n 15 127.0.0.1 > nul</CommandLine>
+                    <Description>Attente du réseau</Description>
                     <Order>5</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
-                <!-- Configuration WinRM -->
+                <!-- Désactiver le pare-feu -->
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File E:\winrm-setup.ps1</CommandLine>
-                    <Description>Configuration de WinRM pour Packer (E:)</Description>
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False"</CommandLine>
+                    <Description>Désactivation du pare-feu</Description>
                     <Order>6</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
+                <!-- Définir le profil réseau comme Privé -->
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File F:\winrm-setup.ps1</CommandLine>
-                    <Description>Configuration de WinRM pour Packer (F:)</Description>
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private -ErrorAction SilentlyContinue"</CommandLine>
+                    <Description>Profil réseau privé</Description>
                     <Order>7</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
+                <!-- Configurer WinRM -->
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File G:\winrm-setup.ps1</CommandLine>
-                    <Description>Configuration de WinRM pour Packer (G:)</Description>
+                    <CommandLine>cmd /c winrm quickconfig -q -force</CommandLine>
+                    <Description>WinRM quickconfig</Description>
                     <Order>8</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+                    <Description>WinRM AllowUnencrypted</Description>
+                    <Order>9</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
+                    <Description>WinRM Basic Auth</Description>
+                    <Order>10</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c winrm set winrm/config @{MaxTimeoutms="1800000"}</CommandLine>
+                    <Description>WinRM Timeout</Description>
+                    <Order>11</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <!-- Service WinRM automatique -->
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-Service -Name WinRM -StartupType Automatic; Start-Service WinRM"</CommandLine>
+                    <Description>Service WinRM</Description>
+                    <Order>12</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <!-- Règle pare-feu WinRM -->
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>netsh advfirewall firewall add rule name="WinRM HTTP" dir=in action=allow protocol=TCP localport=5985</CommandLine>
+                    <Description>Règle pare-feu WinRM</Description>
+                    <Order>13</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <!-- PowerShell Remoting -->
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Enable-PSRemoting -Force -SkipNetworkProfileCheck"</CommandLine>
+                    <Description>PowerShell Remoting</Description>
+                    <Order>14</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
             </FirstLogonCommands>

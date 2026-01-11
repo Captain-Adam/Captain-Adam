@@ -1,93 +1,71 @@
 # Script de configuration WinRM pour Packer
 # Ce script configure WinRM pour permettre la communication avec Packer
 
-$ErrorActionPreference = "Stop"
+# Ne pas arrêter sur les erreurs pour s'assurer que tout s'exécute
+$ErrorActionPreference = "Continue"
 
 Write-Host "=== Configuration de WinRM pour Packer ===" -ForegroundColor Green
 
 # Attendre que le réseau soit disponible
 Write-Host "Attente de la connectivité réseau..."
-$maxAttempts = 30
-$attempt = 0
-while ($attempt -lt $maxAttempts) {
-    $networkProfile = Get-NetConnectionProfile -ErrorAction SilentlyContinue
-    if ($networkProfile) {
-        Write-Host "Réseau connecté: $($networkProfile.Name)"
-        break
-    }
-    Start-Sleep -Seconds 2
-    $attempt++
+Start-Sleep -Seconds 10
+
+# Définir le profil réseau comme Privé
+Write-Host "Configuration du profil réseau..."
+try {
+    Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
+} catch {
+    Write-Host "Impossible de changer le profil réseau: $_"
 }
 
-# Définir le profil réseau comme Privé (requis pour WinRM)
-Write-Host "Configuration du profil réseau en Privé..."
-Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private -ErrorAction SilentlyContinue
-
-# Activer la découverte réseau
-Write-Host "Activation de la découverte réseau..."
-netsh advfirewall firewall set rule group="Découverte du réseau" new enable=Yes 2>$null
-netsh advfirewall firewall set rule group="Network Discovery" new enable=Yes 2>$null
-
-# Désactiver le pare-feu temporairement pour la configuration
-Write-Host "Désactivation temporaire du pare-feu..."
+# Désactiver complètement le pare-feu
+Write-Host "Désactivation du pare-feu..."
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 
-# Configuration PowerShell Remoting
-Write-Host "Configuration de PowerShell Remoting..."
-Enable-PSRemoting -Force -SkipNetworkProfileCheck
-
-# Configuration WinRM
+# Configurer WinRM de manière simple et directe
 Write-Host "Configuration de WinRM..."
-winrm quickconfig -q
-winrm set winrm/config/service '@{AllowUnencrypted="true"}'
-winrm set winrm/config/service/auth '@{Basic="true"}'
-winrm set winrm/config/client '@{AllowUnencrypted="true"}'
-winrm set winrm/config/client/auth '@{Basic="true"}'
 
-# Augmenter les limites WinRM
-Write-Host "Configuration des limites WinRM..."
-winrm set winrm/config '@{MaxTimeoutms="1800000"}'
-winrm set winrm/config/winrs '@{MaxMemoryPerShellMB="2048"}'
-winrm set winrm/config/winrs '@{MaxProcessesPerShell="100"}'
-winrm set winrm/config/winrs '@{MaxShellsPerUser="30"}'
+# Arrêter le service WinRM s'il est en cours d'exécution
+Stop-Service WinRM -Force -ErrorAction SilentlyContinue
 
-# Configuration du listener HTTPS (optionnel)
-Write-Host "Configuration du listener WinRM..."
-$selector_set = @{
-    Address = "*"
-    Transport = "HTTP"
-}
-
-$value_set = @{
-    Enabled = "true"
-}
-
-# Créer un listener HTTP si nécessaire
-$listeners = winrm enumerate winrm/config/Listener
-if ($listeners -notmatch "Transport = HTTP") {
-    winrm create winrm/config/Listener?Address=*+Transport=HTTP
-}
-
-# Configurer le service WinRM pour démarrer automatiquement
-Write-Host "Configuration du service WinRM..."
+# Configuration du service WinRM
 Set-Service -Name WinRM -StartupType Automatic
+
+# Démarrer le service
+Start-Service WinRM
+
+# Configuration basique via winrm
+cmd /c 'winrm quickconfig -q -force'
+cmd /c 'winrm set winrm/config @{MaxTimeoutms="1800000"}'
+cmd /c 'winrm set winrm/config/service @{AllowUnencrypted="true"}'
+cmd /c 'winrm set winrm/config/service/auth @{Basic="true"}'
+cmd /c 'winrm set winrm/config/client @{AllowUnencrypted="true"}'
+cmd /c 'winrm set winrm/config/client/auth @{Basic="true"}'
+cmd /c 'winrm set winrm/config/winrs @{MaxMemoryPerShellMB="2048"}'
+
+# S'assurer que le listener HTTP existe
+cmd /c 'winrm delete winrm/config/Listener?Address=*+Transport=HTTP' 2>$null
+cmd /c 'winrm create winrm/config/Listener?Address=*+Transport=HTTP'
+
+# Redémarrer le service WinRM
 Restart-Service WinRM
 
-# Ajouter des règles de pare-feu pour WinRM
-Write-Host "Configuration des règles de pare-feu pour WinRM..."
-netsh advfirewall firewall add rule name="WinRM-HTTP" dir=in localport=5985 protocol=TCP action=allow
-netsh advfirewall firewall add rule name="WinRM-HTTPS" dir=in localport=5986 protocol=TCP action=allow
+# Configurer PowerShell Remoting
+Enable-PSRemoting -Force -SkipNetworkProfileCheck -ErrorAction SilentlyContinue
 
-# Réactiver le pare-feu avec les exceptions
-Write-Host "Réactivation du pare-feu..."
-Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+# Ajouter règle de pare-feu explicite pour WinRM (au cas où)
+netsh advfirewall firewall add rule name="WinRM HTTP" dir=in action=allow protocol=TCP localport=5985
 
-# Vérifier la configuration
-Write-Host ""
-Write-Host "=== Vérification de la configuration WinRM ===" -ForegroundColor Green
-winrm get winrm/config/service
-winrm enumerate winrm/config/Listener
-
+# Afficher la configuration
 Write-Host ""
 Write-Host "=== Configuration WinRM terminée ===" -ForegroundColor Green
-Write-Host "WinRM est maintenant prêt pour Packer."
+Write-Host "IP de la machine:"
+Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne "127.0.0.1" } | Select-Object IPAddress
+
+Write-Host ""
+Write-Host "Service WinRM:"
+Get-Service WinRM | Select-Object Status, StartType
+
+Write-Host ""
+Write-Host "Test WinRM:"
+Test-WSMan -ErrorAction SilentlyContinue
