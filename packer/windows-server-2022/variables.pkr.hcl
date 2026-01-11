@@ -167,3 +167,30 @@ variable "windows_language" {
   description = "Langue d'installation Windows"
   default     = "fr-FR"
 }
+
+# ============================================================================
+# Variables d'optimisation
+# ============================================================================
+variable "skip_windows_updates" {
+  type        = bool
+  description = "Ignorer l'installation des mises à jour Windows (accélère la création)"
+  default     = false
+}
+
+variable "skip_chocolatey" {
+  type        = bool
+  description = "Ignorer l'installation de Chocolatey et des outils"
+  default     = false
+}
+
+variable "vm_cpus_build" {
+  type        = number
+  description = "Nombre de vCPUs pendant le build (plus = plus rapide)"
+  default     = 0
+}
+
+variable "vm_memory_build" {
+  type        = number
+  description = "Mémoire RAM pendant le build en Mo (plus = plus rapide)"
+  default     = 0
+}

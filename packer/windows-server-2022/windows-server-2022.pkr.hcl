@@ -12,6 +12,15 @@ packer {
 }
 
 # ============================================================================
+# Variables locales pour l'optimisation
+# ============================================================================
+locals {
+  # Utiliser plus de ressources pendant le build si spécifié
+  build_cpus   = var.vm_cpus_build > 0 ? var.vm_cpus_build : var.vm_cpus
+  build_memory = var.vm_memory_build > 0 ? var.vm_memory_build : var.vm_memory
+}
+
+# ============================================================================
 # Source: Proxmox VE
 # ============================================================================
 source "proxmox-iso" "windows-server-2022" {
@@ -38,14 +47,14 @@ source "proxmox-iso" "windows-server-2022" {
     pre_enrolled_keys = true
   }
 
-  # CPU
+  # CPU - Utiliser plus de cores pendant le build pour accélérer
   cpu_type = "host"
-  cores    = var.vm_cpus
+  cores    = local.build_cpus
   sockets  = 1
 
-  # Mémoire
-  memory             = var.vm_memory
-  ballooning_minimum = 1024
+  # Mémoire - Utiliser plus de RAM pendant le build
+  memory             = local.build_memory
+  ballooning_minimum = 0
 
   # Réseau
   network_adapters {
@@ -55,30 +64,27 @@ source "proxmox-iso" "windows-server-2022" {
     vlan_tag = var.proxmox_network_vlan > 0 ? var.proxmox_network_vlan : null
   }
 
-  # Disque principal
+  # Disque principal - Optimisé pour la vitesse
   scsi_controller = "virtio-scsi-single"
   disks {
-    type              = "scsi"
-    disk_size         = var.vm_disk_size
-    storage_pool      = var.proxmox_storage
-    format            = "raw"
-    io_thread         = true
-    discard           = true
-    ssd               = true
+    type         = "scsi"
+    disk_size    = var.vm_disk_size
+    storage_pool = var.proxmox_storage
+    format       = "raw"
+    io_thread    = true
+    discard      = true
+    ssd          = true
+    cache        = "writeback"
   }
 
   # ISO Windows Server 2022
   iso_file = var.iso_file
-  # Ou téléchargement automatique :
-  # iso_url      = var.iso_url
-  # iso_checksum = var.iso_checksum
-  # iso_storage_pool = var.proxmox_iso_storage
 
   # ISO VirtIO drivers (obligatoire pour Windows)
   additional_iso_files {
-    device           = "sata1"
-    iso_file         = var.virtio_iso_file
-    unmount          = true
+    device   = "sata1"
+    iso_file = var.virtio_iso_file
+    unmount  = true
   }
 
   # Fichiers Autounattend (via CD-ROM)
@@ -97,11 +103,11 @@ source "proxmox-iso" "windows-server-2022" {
   communicator   = "winrm"
   winrm_username = var.winrm_username
   winrm_password = var.winrm_password
-  winrm_timeout  = "6h"
+  winrm_timeout  = "2h"
   winrm_insecure = true
 
   # Boot
-  boot_wait = "5s"
+  boot_wait    = "3s"
   boot_command = ["<spacebar>"]
 
   # Agent QEMU
@@ -112,7 +118,7 @@ source "proxmox-iso" "windows-server-2022" {
   cloud_init_storage_pool = var.proxmox_storage
 
   # Timeout
-  task_timeout = "30m"
+  task_timeout = "20m"
 }
 
 # ============================================================================
@@ -126,43 +132,44 @@ build {
   # Attendre que Windows soit prêt
   provisioner "powershell" {
     inline = [
-      "Write-Host 'Attente de Windows...'",
-      "Start-Sleep -Seconds 30"
+      "Write-Host 'Windows est prêt, démarrage du provisionnement...'"
     ]
   }
 
   # Installation de l'agent QEMU Guest
   provisioner "powershell" {
-    script = "${path.root}/scripts/install-qemu-agent.ps1"
+    script            = "${path.root}/scripts/install-qemu-agent.ps1"
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
   }
 
-  # Installation des mises à jour Windows
+  # Installation des mises à jour Windows (optionnel)
   provisioner "powershell" {
-    script = "${path.root}/scripts/install-windows-updates.ps1"
+    script            = "${path.root}/scripts/install-windows-updates.ps1"
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
-    timeout           = "4h"
+    timeout           = "3h"
+    only              = var.skip_windows_updates ? [] : ["proxmox-iso.windows-server-2022"]
   }
 
   # Configuration de base Windows
   provisioner "powershell" {
-    script = "${path.root}/scripts/configure-windows.ps1"
+    script            = "${path.root}/scripts/configure-windows.ps1"
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
   }
 
-  # Installation de Chocolatey et outils de base
+  # Installation de Chocolatey et outils de base (optionnel)
   provisioner "powershell" {
-    script = "${path.root}/scripts/install-chocolatey.ps1"
+    script            = "${path.root}/scripts/install-chocolatey.ps1"
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
+    only              = var.skip_chocolatey ? [] : ["proxmox-iso.windows-server-2022"]
   }
 
   # Nettoyage final
   provisioner "powershell" {
-    script = "${path.root}/scripts/cleanup.ps1"
+    script            = "${path.root}/scripts/cleanup.ps1"
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
   }

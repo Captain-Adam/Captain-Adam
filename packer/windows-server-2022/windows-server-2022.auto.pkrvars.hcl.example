@@ -57,3 +57,17 @@ windows_timezone = "Romance Standard Time"
 
 # Langue d'installation
 windows_language = "fr-FR"
+
+# ============================================================================
+# Optimisation du build (optionnel)
+# ============================================================================
+# Ignorer les mises à jour Windows pour accélérer le build
+skip_windows_updates = false
+
+# Ignorer l'installation de Chocolatey
+skip_chocolatey = false
+
+# Ressources supplémentaires pendant le build (0 = utiliser les valeurs vm_cpus/vm_memory)
+# Augmentez ces valeurs pour accélérer significativement le build
+vm_cpus_build   = 8             # Plus de CPUs = installation plus rapide
+vm_memory_build = 16384         # Plus de RAM = moins de swap, plus rapide
