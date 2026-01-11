@@ -1,84 +1,76 @@
-# Variables pour Windows Server 2022 Packer Template
+# Variables pour Windows Server 2022 Packer Template - Proxmox VE
 
 # ============================================================================
-# Variables vSphere
+# Variables Proxmox
 # ============================================================================
-variable "vsphere_server" {
+variable "proxmox_host" {
   type        = string
-  description = "Adresse du serveur vCenter"
+  description = "Adresse IP ou nom DNS du serveur Proxmox"
   default     = ""
 }
 
-variable "vsphere_user" {
+variable "proxmox_username" {
   type        = string
-  description = "Utilisateur vCenter"
-  default     = ""
+  description = "Utilisateur Proxmox (format: user@realm)"
+  default     = "root@pam"
 }
 
-variable "vsphere_password" {
+variable "proxmox_password" {
   type        = string
-  description = "Mot de passe vCenter"
+  description = "Mot de passe Proxmox (si pas de token)"
   sensitive   = true
   default     = ""
 }
 
-variable "vsphere_insecure" {
+variable "proxmox_token" {
+  type        = string
+  description = "Token API Proxmox (format: user@realm!tokenid=token-value)"
+  sensitive   = true
+  default     = ""
+}
+
+variable "proxmox_skip_tls_verify" {
   type        = bool
-  description = "Ignorer la vérification SSL"
+  description = "Ignorer la vérification du certificat TLS"
   default     = true
 }
 
-variable "vsphere_datacenter" {
+variable "proxmox_node" {
   type        = string
-  description = "Datacenter vSphere"
-  default     = ""
+  description = "Nom du nœud Proxmox"
+  default     = "pve"
 }
 
-variable "vsphere_cluster" {
+variable "proxmox_storage" {
   type        = string
-  description = "Cluster vSphere"
-  default     = ""
+  description = "Pool de stockage Proxmox pour les disques VM"
+  default     = "local-lvm"
 }
 
-variable "vsphere_datastore" {
+variable "proxmox_iso_storage" {
   type        = string
-  description = "Datastore vSphere"
-  default     = ""
+  description = "Pool de stockage Proxmox pour les ISO"
+  default     = "local"
 }
 
-variable "vsphere_folder" {
+variable "proxmox_network_bridge" {
   type        = string
-  description = "Dossier VM dans vSphere"
-  default     = "Templates"
-}
-
-variable "vsphere_network" {
-  type        = string
-  description = "Réseau vSphere"
-  default     = "VM Network"
-}
-
-# ============================================================================
-# Variables Hyper-V
-# ============================================================================
-variable "hyperv_switch_name" {
-  type        = string
-  description = "Nom du switch Hyper-V"
-  default     = "Default Switch"
+  description = "Bridge réseau Proxmox"
+  default     = "vmbr0"
 }
 
 # ============================================================================
 # Variables ISO
 # ============================================================================
-variable "iso_path" {
+variable "iso_file" {
   type        = string
-  description = "Chemin de l'ISO Windows Server 2022 (pour vSphere)"
-  default     = "[datastore1] ISO/Windows_Server_2022.iso"
+  description = "Chemin de l'ISO Windows Server 2022 dans Proxmox (ex: local:iso/win2022.iso)"
+  default     = "local:iso/SERVER_EVAL_x64FRE_fr-fr.iso"
 }
 
 variable "iso_url" {
   type        = string
-  description = "URL de l'ISO Windows Server 2022"
+  description = "URL de téléchargement de l'ISO (alternative à iso_file)"
   default     = ""
 }
 
@@ -88,9 +80,21 @@ variable "iso_checksum" {
   default     = ""
 }
 
+variable "virtio_iso_file" {
+  type        = string
+  description = "Chemin de l'ISO VirtIO drivers dans Proxmox"
+  default     = "local:iso/virtio-win.iso"
+}
+
 # ============================================================================
 # Variables VM
 # ============================================================================
+variable "vm_id" {
+  type        = number
+  description = "ID de la VM dans Proxmox (0 = auto)"
+  default     = 0
+}
+
 variable "vm_name" {
   type        = string
   description = "Nom de la VM/Template"
@@ -103,12 +107,6 @@ variable "vm_cpus" {
   default     = 4
 }
 
-variable "vm_cpu_cores" {
-  type        = number
-  description = "Nombre de cores par CPU"
-  default     = 1
-}
-
 variable "vm_memory" {
   type        = number
   description = "Mémoire RAM en Mo"
@@ -116,9 +114,9 @@ variable "vm_memory" {
 }
 
 variable "vm_disk_size" {
-  type        = number
-  description = "Taille du disque en Mo"
-  default     = 61440
+  type        = string
+  description = "Taille du disque (ex: 60G)"
+  default     = "60G"
 }
 
 # ============================================================================
@@ -149,7 +147,7 @@ variable "windows_edition" {
 variable "windows_product_key" {
   type        = string
   description = "Clé de produit Windows Server 2022 (KMS ou Retail)"
-  default     = "VDYBN-27WPP-V4HQT-9VMD4-VMK7H"  # KMS Key pour Standard
+  default     = "VDYBN-27WPP-V4HQT-9VMD4-VMK7H"
 }
 
 variable "windows_timezone" {
@@ -162,10 +160,4 @@ variable "windows_language" {
   type        = string
   description = "Langue d'installation Windows"
   default     = "fr-FR"
-}
-
-variable "windows_keyboard" {
-  type        = string
-  description = "Disposition du clavier"
-  default     = "040c:0000040c"
 }

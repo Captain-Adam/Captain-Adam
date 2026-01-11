@@ -1,167 +1,116 @@
-# Windows Server 2022 Packer Template
-# Compatible avec VMware vSphere, Hyper-V, et VirtualBox
+# Windows Server 2022 Packer Template pour Proxmox VE
+# Crée un template Windows Server 2022 sur Proxmox
 
 packer {
   required_version = ">= 1.8.0"
   required_plugins {
-    vsphere = {
-      version = ">= 1.2.0"
-      source  = "github.com/hashicorp/vsphere"
-    }
-    hyperv = {
+    proxmox = {
       version = ">= 1.1.0"
-      source  = "github.com/hashicorp/hyperv"
-    }
-    virtualbox = {
-      version = ">= 1.0.0"
-      source  = "github.com/hashicorp/virtualbox"
+      source  = "github.com/hashicorp/proxmox"
     }
   }
 }
 
 # ============================================================================
-# Source: VMware vSphere
+# Source: Proxmox VE
 # ============================================================================
-source "vsphere-iso" "windows-server-2022" {
-  # Connexion vCenter
-  vcenter_server      = var.vsphere_server
-  username            = var.vsphere_user
-  password            = var.vsphere_password
-  insecure_connection = var.vsphere_insecure
-
-  # Emplacement VM
-  datacenter = var.vsphere_datacenter
-  cluster    = var.vsphere_cluster
-  datastore  = var.vsphere_datastore
-  folder     = var.vsphere_folder
+source "proxmox-iso" "windows-server-2022" {
+  # Connexion Proxmox
+  proxmox_url              = "https://${var.proxmox_host}:8006/api2/json"
+  username                 = var.proxmox_username
+  password                 = var.proxmox_password
+  token                    = var.proxmox_token
+  insecure_skip_tls_verify = var.proxmox_skip_tls_verify
+  node                     = var.proxmox_node
 
   # Configuration VM
+  vm_id                = var.vm_id
   vm_name              = var.vm_name
-  guest_os_type        = "windows2019srvNext_64Guest"
-  firmware             = "efi"
-  CPUs                 = var.vm_cpus
-  cpu_cores            = var.vm_cpu_cores
-  RAM                  = var.vm_memory
-  RAM_reserve_all      = false
-  disk_controller_type = ["pvscsi"]
+  template_description = "Windows Server 2022 - Template créé par Packer"
 
-  storage {
-    disk_size             = var.vm_disk_size
-    disk_thin_provisioned = true
+  # OS
+  os       = "win11"
+  bios     = "ovmf"
+  machine  = "q35"
+  efi_config {
+    efi_storage_pool  = var.proxmox_storage
+    efi_type          = "4m"
+    pre_enrolled_keys = true
   }
 
-  network_adapters {
-    network      = var.vsphere_network
-    network_card = "vmxnet3"
-  }
+  # CPU
+  cpu_type = "host"
+  cores    = var.vm_cpus
+  sockets  = 1
 
-  # ISO
-  iso_paths = [var.iso_path]
-
-  # Floppy pour Autounattend
-  floppy_files = [
-    "${path.root}/http/Autounattend.xml",
-    "${path.root}/scripts/winrm-setup.ps1"
-  ]
-
-  # Communication
-  communicator   = "winrm"
-  winrm_username = var.winrm_username
-  winrm_password = var.winrm_password
-  winrm_timeout  = "6h"
-
-  # Boot
-  boot_order = "disk,cdrom"
-  boot_wait  = "5s"
-  boot_command = ["<spacebar>"]
-
-  # Conversion en template
-  convert_to_template = true
-}
-
-# ============================================================================
-# Source: Hyper-V
-# ============================================================================
-source "hyperv-iso" "windows-server-2022" {
-  # Configuration VM
-  vm_name          = var.vm_name
-  generation       = 2
-  cpus             = var.vm_cpus
-  memory           = var.vm_memory
-  disk_size        = var.vm_disk_size
-  enable_secure_boot = true
-  secure_boot_template = "MicrosoftWindows"
-
-  # ISO
-  iso_url      = var.iso_url
-  iso_checksum = var.iso_checksum
-
-  # Floppy pour Autounattend
-  secondary_iso_images = []
-  cd_files = [
-    "${path.root}/http/Autounattend.xml",
-    "${path.root}/scripts/winrm-setup.ps1"
-  ]
+  # Mémoire
+  memory             = var.vm_memory
+  ballooning_minimum = 1024
 
   # Réseau
-  switch_name = var.hyperv_switch_name
+  network_adapters {
+    bridge   = var.proxmox_network_bridge
+    model    = "virtio"
+    firewall = false
+  }
 
-  # Communication
+  # Disque principal
+  scsi_controller = "virtio-scsi-single"
+  disks {
+    type              = "scsi"
+    disk_size         = var.vm_disk_size
+    storage_pool      = var.proxmox_storage
+    format            = "raw"
+    io_thread         = true
+    discard           = true
+    ssd               = true
+  }
+
+  # ISO Windows Server 2022
+  iso_file = var.iso_file
+  # Ou téléchargement automatique :
+  # iso_url      = var.iso_url
+  # iso_checksum = var.iso_checksum
+  # iso_storage_pool = var.proxmox_iso_storage
+
+  # ISO VirtIO drivers (obligatoire pour Windows)
+  additional_iso_files {
+    device           = "sata1"
+    iso_file         = var.virtio_iso_file
+    unmount          = true
+  }
+
+  # Fichiers Autounattend (via CD-ROM)
+  additional_iso_files {
+    device   = "sata2"
+    cd_files = [
+      "${path.root}/http/Autounattend.xml",
+      "${path.root}/scripts/winrm-setup.ps1"
+    ]
+    cd_label = "OEMDRV"
+    unmount  = true
+  }
+
+  # Communication WinRM
   communicator   = "winrm"
   winrm_username = var.winrm_username
   winrm_password = var.winrm_password
   winrm_timeout  = "6h"
+  winrm_insecure = true
 
   # Boot
   boot_wait = "5s"
   boot_command = ["<spacebar>"]
 
-  # Output
-  output_directory = "${path.root}/output/hyperv-${var.vm_name}"
+  # Agent QEMU
+  qemu_agent = true
 
-  shutdown_command = "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\""
-}
+  # Cloud-Init (optionnel)
+  cloud_init              = false
+  cloud_init_storage_pool = var.proxmox_storage
 
-# ============================================================================
-# Source: VirtualBox
-# ============================================================================
-source "virtualbox-iso" "windows-server-2022" {
-  # Configuration VM
-  vm_name    = var.vm_name
-  guest_os_type = "Windows2019_64"
-  cpus       = var.vm_cpus
-  memory     = var.vm_memory
-  disk_size  = var.vm_disk_size
-  firmware   = "efi"
-
-  # ISO
-  iso_url      = var.iso_url
-  iso_checksum = var.iso_checksum
-
-  # Floppy pour Autounattend
-  floppy_files = [
-    "${path.root}/http/Autounattend.xml",
-    "${path.root}/scripts/winrm-setup.ps1"
-  ]
-
-  # Guest Additions
-  guest_additions_mode = "upload"
-  guest_additions_path = "C:/Windows/Temp/VBoxGuestAdditions.iso"
-
-  # Communication
-  communicator   = "winrm"
-  winrm_username = var.winrm_username
-  winrm_password = var.winrm_password
-  winrm_timeout  = "6h"
-
-  # Boot
-  boot_wait = "5s"
-  boot_command = ["<spacebar>"]
-
-  # Output
-  output_directory = "${path.root}/output/virtualbox-${var.vm_name}"
-
-  shutdown_command = "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\""
+  # Timeout
+  task_timeout = "30m"
 }
 
 # ============================================================================
@@ -170,11 +119,7 @@ source "virtualbox-iso" "windows-server-2022" {
 build {
   name = "windows-server-2022"
 
-  sources = [
-    "source.vsphere-iso.windows-server-2022",
-    "source.hyperv-iso.windows-server-2022",
-    "source.virtualbox-iso.windows-server-2022"
-  ]
+  sources = ["source.proxmox-iso.windows-server-2022"]
 
   # Attendre que Windows soit prêt
   provisioner "powershell" {
@@ -184,18 +129,19 @@ build {
     ]
   }
 
+  # Installation de l'agent QEMU Guest
+  provisioner "powershell" {
+    script = "${path.root}/scripts/install-qemu-agent.ps1"
+    elevated_user     = var.winrm_username
+    elevated_password = var.winrm_password
+  }
+
   # Installation des mises à jour Windows
   provisioner "powershell" {
     script = "${path.root}/scripts/install-windows-updates.ps1"
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
     timeout           = "4h"
-  }
-
-  # Installation des outils VMware (uniquement pour vSphere)
-  provisioner "powershell" {
-    only   = ["vsphere-iso.windows-server-2022"]
-    script = "${path.root}/scripts/install-vmware-tools.ps1"
   }
 
   # Configuration de base Windows

@@ -1,42 +1,38 @@
-# Exemple de fichier de variables pour Windows Server 2022
+# Exemple de fichier de variables pour Windows Server 2022 - Proxmox VE
 # Copiez ce fichier vers windows-server-2022.auto.pkrvars.hcl et modifiez les valeurs
 
 # ============================================================================
-# Configuration vSphere
+# Configuration Proxmox
 # ============================================================================
-vsphere_server     = "vcenter.example.com"
-vsphere_user       = "administrator@vsphere.local"
-vsphere_password   = "VotreMotDePasse!"
-vsphere_insecure   = true
-vsphere_datacenter = "Datacenter"
-vsphere_cluster    = "Cluster"
-vsphere_datastore  = "Datastore1"
-vsphere_folder     = "Templates"
-vsphere_network    = "VM Network"
-
-# ============================================================================
-# Configuration Hyper-V
-# ============================================================================
-hyperv_switch_name = "Default Switch"
+proxmox_host            = "192.168.1.100"
+proxmox_username        = "root@pam"
+proxmox_password        = "VotreMotDePasse!"
+# Ou utilisez un token API (recommandé):
+# proxmox_token         = "packer@pve!packer-token=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_skip_tls_verify = true
+proxmox_node            = "pve"
+proxmox_storage         = "local-lvm"
+proxmox_iso_storage     = "local"
+proxmox_network_bridge  = "vmbr0"
 
 # ============================================================================
 # Configuration ISO
 # ============================================================================
-# Pour vSphere (chemin dans le datastore)
-iso_path = "[Datastore1] ISO/SERVER_EVAL_x64FRE_fr-fr.iso"
+# ISO Windows Server 2022 (doit être uploadé sur Proxmox)
+iso_file = "local:iso/SERVER_EVAL_x64FRE_fr-fr.iso"
 
-# Pour Hyper-V ou VirtualBox (chemin local ou URL)
-iso_url      = "https://software-static.download.prss.microsoft.com/sg/download/888969d5-f34g-4e03-ac9d-1f9786c66749/SERVER_EVAL_x64FRE_fr-fr.iso"
-iso_checksum = "sha256:3e4fa6d8507b554856fc9ca6079cc402df11a8b79344871669f0251535255325"
+# ISO VirtIO drivers (obligatoire pour Windows sur Proxmox)
+# Téléchargez depuis: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
+virtio_iso_file = "local:iso/virtio-win.iso"
 
 # ============================================================================
 # Configuration VM
 # ============================================================================
+vm_id        = 9000          # ID de la VM (0 = auto)
 vm_name      = "windows-server-2022-template"
 vm_cpus      = 4
-vm_cpu_cores = 1
-vm_memory    = 8192    # 8 GB
-vm_disk_size = 61440   # 60 GB
+vm_memory    = 8192          # 8 GB
+vm_disk_size = "60G"
 
 # ============================================================================
 # Configuration WinRM
@@ -60,6 +56,3 @@ windows_timezone = "Romance Standard Time"
 
 # Langue d'installation
 windows_language = "fr-FR"
-
-# Disposition du clavier (LCID)
-windows_keyboard = "040c:0000040c"
