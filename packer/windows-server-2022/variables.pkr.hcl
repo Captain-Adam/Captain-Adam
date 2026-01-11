@@ -141,6 +141,18 @@ variable "winrm_password" {
   default     = "P@ssw0rd123!"
 }
 
+variable "winrm_host" {
+  type        = string
+  description = "Adresse IP de la VM pour WinRM (vide = auto-détection via QEMU Guest Agent)"
+  default     = ""
+}
+
+variable "use_qemu_agent" {
+  type        = bool
+  description = "Utiliser le QEMU Guest Agent pour la détection d'IP (false = utiliser winrm_host)"
+  default     = true
+}
+
 # ============================================================================
 # Variables Windows
 # ============================================================================

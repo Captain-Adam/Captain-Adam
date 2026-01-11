@@ -104,6 +104,7 @@ source "proxmox-iso" "windows-server-2022" {
   winrm_password = var.winrm_password
   winrm_timeout  = "2h"
   winrm_insecure = true
+  winrm_host     = var.winrm_host != "" ? var.winrm_host : null
 
   # Boot - Envoyer plusieurs touches pour capturer "Press any key to boot from CD/DVD"
   boot_wait = "1s"
@@ -120,8 +121,8 @@ source "proxmox-iso" "windows-server-2022" {
     "<spacebar><wait>"
   ]
 
-  # Agent QEMU
-  qemu_agent = true
+  # Agent QEMU - Désactiver si winrm_host est spécifié manuellement
+  qemu_agent = var.use_qemu_agent
 
   # Cloud-Init (optionnel)
   cloud_init              = false
