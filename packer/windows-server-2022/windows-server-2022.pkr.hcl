@@ -82,7 +82,8 @@ source "proxmox-iso" "windows-server-2022" {
 
   # Fichiers Autounattend (via CD-ROM)
   additional_iso_files {
-    device   = "sata2"
+    device           = "sata2"
+    iso_storage_pool = var.proxmox_iso_storage
     cd_files = [
       "${path.root}/http/Autounattend.xml",
       "${path.root}/scripts/winrm-setup.ps1"
