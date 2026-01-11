@@ -198,22 +198,56 @@
 
             <!-- Exécution du script WinRM au premier démarrage -->
             <FirstLogonCommands>
+                <!-- Installation du QEMU Guest Agent (nécessaire pour Packer) -->
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c if exist D:\guest-agent\qemu-ga-x86_64.msi msiexec /i D:\guest-agent\qemu-ga-x86_64.msi /qn /norestart</CommandLine>
+                    <Description>Installation QEMU Guest Agent (D:)</Description>
+                    <Order>1</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c if exist E:\guest-agent\qemu-ga-x86_64.msi msiexec /i E:\guest-agent\qemu-ga-x86_64.msi /qn /norestart</CommandLine>
+                    <Description>Installation QEMU Guest Agent (E:)</Description>
+                    <Order>2</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c if exist F:\guest-agent\qemu-ga-x86_64.msi msiexec /i F:\guest-agent\qemu-ga-x86_64.msi /qn /norestart</CommandLine>
+                    <Description>Installation QEMU Guest Agent (F:)</Description>
+                    <Order>3</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <!-- Démarrage du service QEMU Guest Agent -->
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c net start QEMU-GA</CommandLine>
+                    <Description>Démarrage du service QEMU Guest Agent</Description>
+                    <Order>4</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <!-- Pause pour laisser le temps à l'agent de démarrer -->
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>cmd /c ping -n 10 127.0.0.1 > nul</CommandLine>
+                    <Description>Attente du démarrage de l'agent</Description>
+                    <Order>5</Order>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+                <!-- Configuration WinRM -->
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File E:\winrm-setup.ps1</CommandLine>
                     <Description>Configuration de WinRM pour Packer (E:)</Description>
-                    <Order>1</Order>
+                    <Order>6</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File F:\winrm-setup.ps1</CommandLine>
                     <Description>Configuration de WinRM pour Packer (F:)</Description>
-                    <Order>2</Order>
+                    <Order>7</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>powershell.exe -ExecutionPolicy Bypass -NoProfile -File G:\winrm-setup.ps1</CommandLine>
                     <Description>Configuration de WinRM pour Packer (G:)</Description>
-                    <Order>3</Order>
+                    <Order>8</Order>
                     <RequiresUserInput>false</RequiresUserInput>
                 </SynchronousCommand>
             </FirstLogonCommands>
