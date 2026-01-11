@@ -1,0 +1,65 @@
+# Exemple de fichier de variables pour Windows Server 2022
+# Copiez ce fichier vers windows-server-2022.auto.pkrvars.hcl et modifiez les valeurs
+
+# ============================================================================
+# Configuration vSphere
+# ============================================================================
+vsphere_server     = "vcenter.example.com"
+vsphere_user       = "administrator@vsphere.local"
+vsphere_password   = "VotreMotDePasse!"
+vsphere_insecure   = true
+vsphere_datacenter = "Datacenter"
+vsphere_cluster    = "Cluster"
+vsphere_datastore  = "Datastore1"
+vsphere_folder     = "Templates"
+vsphere_network    = "VM Network"
+
+# ============================================================================
+# Configuration Hyper-V
+# ============================================================================
+hyperv_switch_name = "Default Switch"
+
+# ============================================================================
+# Configuration ISO
+# ============================================================================
+# Pour vSphere (chemin dans le datastore)
+iso_path = "[Datastore1] ISO/SERVER_EVAL_x64FRE_fr-fr.iso"
+
+# Pour Hyper-V ou VirtualBox (chemin local ou URL)
+iso_url      = "https://software-static.download.prss.microsoft.com/sg/download/888969d5-f34g-4e03-ac9d-1f9786c66749/SERVER_EVAL_x64FRE_fr-fr.iso"
+iso_checksum = "sha256:3e4fa6d8507b554856fc9ca6079cc402df11a8b79344871669f0251535255325"
+
+# ============================================================================
+# Configuration VM
+# ============================================================================
+vm_name      = "windows-server-2022-template"
+vm_cpus      = 4
+vm_cpu_cores = 1
+vm_memory    = 8192    # 8 GB
+vm_disk_size = 61440   # 60 GB
+
+# ============================================================================
+# Configuration WinRM
+# ============================================================================
+winrm_username = "Administrator"
+winrm_password = "P@ssw0rd123!"
+
+# ============================================================================
+# Configuration Windows
+# ============================================================================
+# Éditions disponibles: SERVERSTANDARDCORE, SERVERSTANDARD, SERVERDATACENTERCORE, SERVERDATACENTER
+windows_edition = "SERVERSTANDARD"
+
+# Clés KMS Windows Server 2022
+# Standard: VDYBN-27WPP-V4HQT-9VMD4-VMK7H
+# Datacenter: WX4NM-KYWYW-QJJR4-XV3QB-6VM33
+windows_product_key = "VDYBN-27WPP-V4HQT-9VMD4-VMK7H"
+
+# Fuseau horaire (voir: tzutil /l)
+windows_timezone = "Romance Standard Time"
+
+# Langue d'installation
+windows_language = "fr-FR"
+
+# Disposition du clavier (LCID)
+windows_keyboard = "040c:0000040c"

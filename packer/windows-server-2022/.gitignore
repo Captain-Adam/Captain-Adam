@@ -1,0 +1,21 @@
+# Fichiers de variables avec secrets
+*.auto.pkrvars.hcl
+!*.auto.pkrvars.hcl.example
+
+# Dossier de sortie des images
+output/
+
+# Fichiers Packer
+*.log
+packer_cache/
+crash.log
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Fichiers IDE
+.idea/
+.vscode/
+*.swp
+*.swo
