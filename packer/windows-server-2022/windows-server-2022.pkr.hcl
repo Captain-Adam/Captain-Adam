@@ -74,7 +74,6 @@ source "proxmox-iso" "windows-server-2022" {
     io_thread    = true
     discard      = true
     ssd          = true
-    cache        = "writeback"
   }
 
   # ISO Windows Server 2022
