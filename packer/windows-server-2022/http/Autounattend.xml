@@ -30,31 +30,40 @@
                 <PathAndCredentials wcm:action="add" wcm:keyValue="4">
                     <Path>D:\Balloon\2k22\amd64</Path>
                 </PathAndCredentials>
-                <!-- Lecteur E: -->
                 <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+                    <Path>D:\vioserial\2k22\amd64</Path>
+                </PathAndCredentials>
+                <!-- Lecteur E: -->
+                <PathAndCredentials wcm:action="add" wcm:keyValue="6">
                     <Path>E:\vioscsi\2k22\amd64</Path>
                 </PathAndCredentials>
-                <PathAndCredentials wcm:action="add" wcm:keyValue="6">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="7">
                     <Path>E:\viostor\2k22\amd64</Path>
                 </PathAndCredentials>
-                <PathAndCredentials wcm:action="add" wcm:keyValue="7">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="8">
                     <Path>E:\NetKVM\2k22\amd64</Path>
                 </PathAndCredentials>
-                <PathAndCredentials wcm:action="add" wcm:keyValue="8">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="9">
                     <Path>E:\Balloon\2k22\amd64</Path>
                 </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="10">
+                    <Path>E:\vioserial\2k22\amd64</Path>
+                </PathAndCredentials>
                 <!-- Lecteur F: -->
-                <PathAndCredentials wcm:action="add" wcm:keyValue="9">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="11">
                     <Path>F:\vioscsi\2k22\amd64</Path>
                 </PathAndCredentials>
-                <PathAndCredentials wcm:action="add" wcm:keyValue="10">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="12">
                     <Path>F:\viostor\2k22\amd64</Path>
                 </PathAndCredentials>
-                <PathAndCredentials wcm:action="add" wcm:keyValue="11">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="13">
                     <Path>F:\NetKVM\2k22\amd64</Path>
                 </PathAndCredentials>
-                <PathAndCredentials wcm:action="add" wcm:keyValue="12">
+                <PathAndCredentials wcm:action="add" wcm:keyValue="14">
                     <Path>F:\Balloon\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="15">
+                    <Path>F:\vioserial\2k22\amd64</Path>
                 </PathAndCredentials>
             </DriverPaths>
         </component>
